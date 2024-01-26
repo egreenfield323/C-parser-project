@@ -7,7 +7,7 @@ int main()
 {
     char fileName[STR_LEN];
     char fileContent[STR_LEN];
-    char stack[STR_LEN];
+    char *stack[STR_LEN];
     FILE *file;
 
     printf("Enter a file name\n");
@@ -28,12 +28,11 @@ int main()
             }
         }
 
-
-        printf("%s\n", &stack[0]);
+        printf("%s\n", stack[0]);
         int parenthesis = 0;
         for (int i = 0; i < STR_LEN; i++)
         {
-            if (stack[i] == '(')
+            if (stack[i] == "(")
             {
                 parenthesis++;
             }
