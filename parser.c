@@ -3,8 +3,6 @@
 
 #define STR_LEN 100000
 
-char checkSyntax(char stack[]);
-
 int main()
 {
     char fileName[STR_LEN];
@@ -28,24 +26,22 @@ int main()
             {
                 stack[i] += fileContent[i];
             }
-            checkSyntax(stack);
         }
+
+
+        printf("%s\n", &stack[0]);
+        int parenthesis = 0;
+        for (int i = 0; i < STR_LEN; i++)
+        {
+            if (stack[i] == '(')
+            {
+                parenthesis++;
+            }
+        }
+        printf("%d", parenthesis);
+
         fclose(file);
     }
 
     return 0;
-}
-
-char checkSyntax(char stack[])
-{
-    printf("%s\n", &stack[0]);
-    int parenthesis = 0;
-    for (int i = 0; i < STR_LEN; i++)
-    {
-        if (stack[i] == '(')
-        {
-            parenthesis++;
-        }
-    }
-    printf("%d", parenthesis);
 }
