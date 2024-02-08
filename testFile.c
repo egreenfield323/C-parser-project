@@ -3,7 +3,8 @@
 int main()
 {
     printf("Hello world");
-    {(){}[]}
-    {((())[]){}}
-    return 0;
+    if (int i == 3)
+    {
+        )
+    }
 }

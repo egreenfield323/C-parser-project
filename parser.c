@@ -5,6 +5,7 @@
 #define MAX_LINES 1000
 
 char checkSyntax(char stack[][STR_LEN], int lineCount);
+char findExpected(char stackChar);
 
 int main()
 {
@@ -78,7 +79,8 @@ char checkSyntax(char stack[][STR_LEN], int lineCount)
                     (stack[i][j] == '}' && parenthesesStack[stackIndex - 1] != '{') ||
                     (stack[i][j] == ']' && parenthesesStack[stackIndex - 1] != '['))
                 {
-                    printf("Syntax error at line %d\n", lineNumber);
+                    char expected = findExpected(stack[i][j]);
+                    printf("Expecting '%c' caught at line %d\n", expected, lineNumber);
                     return 1; // Error
                 }
                 else
@@ -99,4 +101,25 @@ char checkSyntax(char stack[][STR_LEN], int lineCount)
 
     // No syntax errors found
     return 0;
+}
+
+char findExpected(char stackChar)
+{
+    switch (stackChar)
+    {
+    case ')':
+        return '(';
+    case '(':
+        return ')';
+    case '}':
+        return '{';
+    case '{':
+        return '}';
+    case ']':
+        return '[';
+    case '[':
+        return ']';
+    default:
+        return '\0';
+    }
 }
