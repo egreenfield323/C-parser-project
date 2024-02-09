@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define STR_LEN 1000 // Adjust as needed
+#define STR_LEN 1000
 #define MAX_LINES 1000
 
 char checkSyntax(char stack[][STR_LEN], int lineCount);
@@ -57,10 +57,10 @@ char checkSyntax(char stack[][STR_LEN], int lineCount)
     // Loop through each line
     for (int i = 0; i < lineCount; i++)
     {
-        // Loop through each char in the line
+        // Loop through each char in current line
         for (int j = 0; j < strlen(stack[i]); j++)
         {
-            // Check for comment
+            // Check for comments
             if (stack[i][j] == '/' && stack[i][j + 1] == '/')
             {
                 break;
@@ -80,35 +80,61 @@ char checkSyntax(char stack[][STR_LEN], int lineCount)
                     (stack[i][j] == ']' && parenthesesStack[stackIndex - 1] != '['))
                 {
                     parenthesesStack[stackIndex++] = stack[i][j];
-                    // char expected = findExpected(stack[i][j]);
-                    // printf("Expecting '%c' caught at line %d\n", expected, lineNumber);
-                    // return 1; // Error
                 }
                 else
                 {
-                    stackIndex--; // Pop from stack
+                    stackIndex--;
                 }
             }
         }
-        lineNumber++; // Move to next line
+        lineNumber++;
     }
 
     // Check for remaining parentheses
     if (stackIndex != 0)
     {
+        for (size_t i = 0; i < stackIndex; i++)
+        {
+            if (parenthesesStack[i] != '\0')
+            {
+                char c = parenthesesStack[i];
+                for (size_t j = stackIndex - 1; j > 0; j++)
+                {
+                    if (parenthesesStack[j] == findExpected(c))
+                    {
+                        stackIndex -= 2;
+                        parenthesesStack[i] = '\0';
+                        parenthesesStack[j] = '\0';
+                        break;
+                    }
+                }
+            }
+        }
+        if (stackIndex != 0)
+        {
+            char missing = ')';
+            for (size_t i = 0; i <= sizeof(parenthesesStack); i++)
+            {
+                if (parenthesesStack[i] == ')' || parenthesesStack[i] == '(' || parenthesesStack[i] == '}' || parenthesesStack[i] == '{' || parenthesesStack[i] == ']' || parenthesesStack[i] == '[')
+                {
+                    missing = findExpected(parenthesesStack[i]);
+                    break;
+                }
+            }
 
-        char c32 = parenthesesStack[0];
-        printf("Syntax error: Unmatched parentheses\n");
-        return 1; // Error
+            printf("Error: missing a '%c'\n", missing);
+        }
+
+        return 1;
     }
 
     // No syntax errors found
     return 0;
 }
 
-char findExpected(char stackChar)
+char findExpected(char c)
 {
-    switch (stackChar)
+    switch (c)
     {
     case ')':
         return '(';
