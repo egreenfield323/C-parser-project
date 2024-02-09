@@ -79,9 +79,10 @@ char checkSyntax(char stack[][STR_LEN], int lineCount)
                     (stack[i][j] == '}' && parenthesesStack[stackIndex - 1] != '{') ||
                     (stack[i][j] == ']' && parenthesesStack[stackIndex - 1] != '['))
                 {
-                    char expected = findExpected(stack[i][j]);
-                    printf("Expecting '%c' caught at line %d\n", expected, lineNumber);
-                    return 1; // Error
+                    parenthesesStack[stackIndex++] = stack[i][j];
+                    // char expected = findExpected(stack[i][j]);
+                    // printf("Expecting '%c' caught at line %d\n", expected, lineNumber);
+                    // return 1; // Error
                 }
                 else
                 {
@@ -95,6 +96,8 @@ char checkSyntax(char stack[][STR_LEN], int lineCount)
     // Check for remaining parentheses
     if (stackIndex != 0)
     {
+
+        char c32 = parenthesesStack[0];
         printf("Syntax error: Unmatched parentheses\n");
         return 1; // Error
     }
