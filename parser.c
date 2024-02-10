@@ -7,6 +7,12 @@
 char checkSyntax(char stack[][STR_LEN], int lineCount);
 char findExpected(char stackChar);
 
+struct ParenthesisInfo
+{
+    char parenthesis;
+    int lineNumber;
+};
+
 int main()
 {
     char fileName[STR_LEN];
@@ -51,8 +57,12 @@ int main()
 char checkSyntax(char stack[][STR_LEN], int lineCount)
 {
     int lineNumber = 1;
-    char parenthesesStack[STR_LEN];
+    struct ParenthesisInfo parenthesesStack[STR_LEN];
     int stackIndex = 0;
+    int inSingleLineComment = 0;
+    int inMultiLineComment = 0;
+    int inDoubleQuote = 0;
+    int inSingleQuote = 0;
 
     // Loop through each line
     for (int i = 0; i < lineCount; i++)
@@ -60,30 +70,68 @@ char checkSyntax(char stack[][STR_LEN], int lineCount)
         // Loop through each char in current line
         for (int j = 0; j < strlen(stack[i]); j++)
         {
-            // Check for comments
-            if (stack[i][j] == '/' && stack[i][j + 1] == '/')
+            // Check for single-line comments
+            if (!inMultiLineComment && !inDoubleQuote && !inSingleQuote && stack[i][j] == '/' && stack[i][j + 1] == '/')
             {
-                break;
+                break; // Ignore the rest of the line
             }
-            // Check for opening (,{,[
-            else if (stack[i][j] == '(' || stack[i][j] == '{' || stack[i][j] == '[')
+            // Check for opening multi-line comments
+            else if (!inSingleLineComment && !inMultiLineComment && !inDoubleQuote && !inSingleQuote && stack[i][j] == '/' && stack[i][j + 1] == '*')
             {
-                parenthesesStack[stackIndex++] = stack[i][j]; // Push to stack
+                inMultiLineComment = 1;
+                j++; // Skip the '*' character
             }
-            // Check for closing (,{,[
-            else if (stack[i][j] == ')' || stack[i][j] == '}' || stack[i][j] == ']')
+            // Check for closing multi-line comments
+            else if (inMultiLineComment && !inDoubleQuote && !inSingleQuote && stack[i][j] == '*' && stack[i][j + 1] == '/')
             {
-                // Check for matching (,{,[
-                if (stackIndex == 0 ||
-                    (stack[i][j] == ')' && parenthesesStack[stackIndex - 1] != '(') ||
-                    (stack[i][j] == '}' && parenthesesStack[stackIndex - 1] != '{') ||
-                    (stack[i][j] == ']' && parenthesesStack[stackIndex - 1] != '['))
+                inMultiLineComment = 0;
+                j++; // Skip the '/' character
+            }
+            // Check for opening double quotes
+            else if (!inSingleLineComment && !inMultiLineComment && !inDoubleQuote && !inSingleQuote && stack[i][j] == '"')
+            {
+                inDoubleQuote = 1;
+            }
+            // Check for closing double quotes
+            else if (!inSingleLineComment && !inMultiLineComment && !inSingleQuote && inDoubleQuote && stack[i][j] == '"' && stack[i][j - 1] != '\\')
+            {
+                inDoubleQuote = 0;
+            }
+            else if (!inSingleLineComment && !inMultiLineComment && !inDoubleQuote && !inSingleQuote && stack[i][j] == '\'')
+            {
+                inSingleQuote = 1;
+            }
+            // Check for single double quotes
+            else if (!inSingleLineComment && !inMultiLineComment && !inDoubleQuote && inSingleQuote && stack[i][j] == '\'' && stack[i][j - 1] != '\\')
+            {
+                inSingleQuote = 0;
+            }
+            else if (!inSingleLineComment && !inMultiLineComment && !inDoubleQuote && !inSingleQuote)
+            {
+                // Check for opening (,{,[
+                if (stack[i][j] == '(' || stack[i][j] == '{' || stack[i][j] == '[')
                 {
-                    parenthesesStack[stackIndex++] = stack[i][j];
+                    parenthesesStack[stackIndex].parenthesis = stack[i][j];
+                    parenthesesStack[stackIndex].lineNumber = lineNumber; // Push to stack
+                    stackIndex++;
                 }
-                else
+                // Check for closing (,{,[
+                else if (stack[i][j] == ')' || stack[i][j] == '}' || stack[i][j] == ']')
                 {
-                    stackIndex--;
+                    // Check for matching (,{,[
+                    if (stackIndex == 0 ||
+                        (stack[i][j] == ')' && parenthesesStack[stackIndex - 1].parenthesis != '(') ||
+                        (stack[i][j] == '}' && parenthesesStack[stackIndex - 1].parenthesis != '{') ||
+                        (stack[i][j] == ']' && parenthesesStack[stackIndex - 1].parenthesis != '['))
+                    {
+                        parenthesesStack[stackIndex].parenthesis = stack[i][j];
+                        parenthesesStack[stackIndex].lineNumber = lineNumber;
+                        stackIndex++;
+                    }
+                    else
+                    {
+                        stackIndex--;
+                    }
                 }
             }
         }
@@ -95,16 +143,16 @@ char checkSyntax(char stack[][STR_LEN], int lineCount)
     {
         for (size_t i = 0; i < stackIndex; i++)
         {
-            if (parenthesesStack[i] != '\0')
+            if (parenthesesStack[i].parenthesis != '\0')
             {
-                char c = parenthesesStack[i];
-                for (size_t j = stackIndex - 1; j > 0; j++)
+                char c = parenthesesStack[i].parenthesis;
+                for (size_t j = stackIndex - 1; j > 0; j--)
                 {
-                    if (parenthesesStack[j] == findExpected(c))
+                    if (parenthesesStack[j].parenthesis == findExpected(c))
                     {
                         stackIndex -= 2;
-                        parenthesesStack[i] = '\0';
-                        parenthesesStack[j] = '\0';
+                        parenthesesStack[i].parenthesis = '\0';
+                        parenthesesStack[j].parenthesis = '\0';
                         break;
                     }
                 }
@@ -113,16 +161,18 @@ char checkSyntax(char stack[][STR_LEN], int lineCount)
         if (stackIndex != 0)
         {
             char missing = ')';
+            int line = 0;
             for (size_t i = 0; i <= sizeof(parenthesesStack); i++)
             {
-                if (parenthesesStack[i] == ')' || parenthesesStack[i] == '(' || parenthesesStack[i] == '}' || parenthesesStack[i] == '{' || parenthesesStack[i] == ']' || parenthesesStack[i] == '[')
+                if (parenthesesStack[i].parenthesis == ')' || parenthesesStack[i].parenthesis == '(' || parenthesesStack[i].parenthesis == '}' || parenthesesStack[i].parenthesis == '{' || parenthesesStack[i].parenthesis == ']' || parenthesesStack[i].parenthesis == '[')
                 {
-                    missing = findExpected(parenthesesStack[i]);
+                    missing = findExpected(parenthesesStack[i].parenthesis);
+                    line = parenthesesStack[i].lineNumber;
                     break;
                 }
             }
 
-            printf("Error: missing a '%c'\n", missing);
+            printf("Error: missing a '%c', detected at line %d\n", missing, line);
         }
 
         return 1;
