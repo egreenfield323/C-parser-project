@@ -73,19 +73,19 @@ char checkSyntax(char stack[][STR_LEN], int lineCount)
             // Check for single-line comments
             if (!inMultiLineComment && !inDoubleQuote && !inSingleQuote && stack[i][j] == '/' && stack[i][j + 1] == '/')
             {
-                break; // Ignore the rest of the line
+                break;
             }
             // Check for opening multi-line comments
             else if (!inSingleLineComment && !inMultiLineComment && !inDoubleQuote && !inSingleQuote && stack[i][j] == '/' && stack[i][j + 1] == '*')
             {
                 inMultiLineComment = 1;
-                j++; // Skip the '*' character
+                j++;
             }
             // Check for closing multi-line comments
             else if (inMultiLineComment && !inDoubleQuote && !inSingleQuote && stack[i][j] == '*' && stack[i][j + 1] == '/')
             {
                 inMultiLineComment = 0;
-                j++; // Skip the '/' character
+                j++;
             }
             // Check for opening double quotes
             else if (!inSingleLineComment && !inMultiLineComment && !inDoubleQuote && !inSingleQuote && stack[i][j] == '"')
@@ -97,11 +97,12 @@ char checkSyntax(char stack[][STR_LEN], int lineCount)
             {
                 inDoubleQuote = 0;
             }
+            // Check for opening single double quotes
             else if (!inSingleLineComment && !inMultiLineComment && !inDoubleQuote && !inSingleQuote && stack[i][j] == '\'')
             {
                 inSingleQuote = 1;
             }
-            // Check for single double quotes
+            // Check for closing single double quotes
             else if (!inSingleLineComment && !inMultiLineComment && !inDoubleQuote && inSingleQuote && stack[i][j] == '\'' && stack[i][j - 1] != '\\')
             {
                 inSingleQuote = 0;
